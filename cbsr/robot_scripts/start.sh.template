@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+SERVER=unknown1
+USER=unknown2
+PASS=unknown3
+EXTRA=unknown4
+
+cd "$(dirname "$0")"
+for f in *.pid; do
+  if [ -f "$f" ]; then
+    echo "Found running processes; please execute stop.sh first!"
+    exit 1
+  fi
+done
+
+echo "Installing..."
+
+INDEX="--trusted-host mirrors.aliyun.com --index-url http://mirrors.aliyun.com/pypi/simple"
+if ! ../.local/bin/pip -V | grep -q "20.3.4"; then
+	curl -sSL http://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py && python get-pip.py $INDEX
+fi
+
+../.local/bin/pip install $INDEX --user --upgrade --prefer-binary redis~=3.5 hiredis~=1.1 .
+
+nohup python -u action_consumer.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > action_consumer.log 2>&1 & echo $! > action_consumer.pid
+nohup python -u audio_consumer.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > audio_consumer.log 2>&1 & echo $! > audio_consumer.pid
+nohup python -u video_producer.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > video_producer.log 2>&1 & echo $! > video_producer.pid
+nohup python -u event_producer.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > event_producer.log 2>&1 & echo $! > event_producer.pid
+nohup python -u audio_producer.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > audio_producer.log 2>&1 & echo $! > audio_producer.pid
+nohup python -u tablet.py --server "$SERVER" --username "$USER" --password "$PASS" $EXTRA > tablet.log 2>&1 & echo $! > tablet.pid
+
+echo "Installation completed!"
