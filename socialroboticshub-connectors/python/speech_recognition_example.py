@@ -47,6 +47,6 @@ class Example:
 
 
 example = Example('127.0.0.1',
-                  '<dialogflow_key_file.json>',
-                  '<dialogflow_agent_id>')
+                  'sir-12-test-jsga-23d5d4c80b77.json',
+                  'sir-12-test-jsga')
 example.run()

@@ -14,7 +14,7 @@ class MyConnector(AbstractSICConnector):
         self.start()
         self.set_language('en-US')
         sleep(1)  # wait for the language to change
-        self.say('Hello, world!')
+        self.say('Hello, world! My name is robbie')
         sleep(3)  # wait for the robot to be done speaking (to see the relevant prints)
         self.stop()
 
