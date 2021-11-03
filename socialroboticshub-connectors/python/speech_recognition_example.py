@@ -28,7 +28,7 @@ class Example:
         self.reset_recognition_management()
 
         if 'name' in self.user_model:
-            self.action_runner.run_waiting_action('say', 'Nice to meet you ' + self.user_model['name'])
+            self.action_runner.run_waiting_action('say', 'Nice to meet you ' + str(self.user_model['name']['name']))
         else:
             self.action_runner.run_waiting_action('say', 'Nice to meet you')
 
