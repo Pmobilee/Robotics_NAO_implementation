@@ -18,8 +18,8 @@ class Example:
         self.sic.start()
 
         self.action_runner.load_waiting_action('set_language', 'en-US')
-        self.action_runner.load_waiting_action('wake_up')
-        self.action_runner.run_loaded_actions()
+        #self.action_runner.load_waiting_action('wake_up')
+        #self.action_runner.run_loaded_actions()
 
         while not self.recognition_manager['attempt_success'] and self.recognition_manager['attempt_number'] < 2:
             self.action_runner.run_waiting_action('say', 'Hi I am Nao. What is your name?')
@@ -32,7 +32,7 @@ class Example:
         else:
             self.action_runner.run_waiting_action('say', 'Nice to meet you')
 
-        self.action_runner.run_waiting_action('rest')
+        #self.action_runner.run_waiting_action('rest')
         self.sic.stop()
 
     def on_intent(self, detection_result: dict) -> None:
