@@ -1,6 +1,13 @@
 from social_interaction_cloud.action import ActionRunner
 from social_interaction_cloud.basic_connector import BasicSICConnector
+import openai
+import os
 
+GPT3_KEY = os.getenv('GPT3_KEY')
+
+print(GPT3_KEY)
+
+exit()
 
 class Example:
     """Example that uses speech recognition. Prerequisites are the availability of a dialogflow_key_file,
@@ -18,11 +25,13 @@ class Example:
         self.sic.start()
 
         self.action_runner.load_waiting_action('set_language', 'en-US')
-        #self.action_runner.load_waiting_action('wake_up')
-        #self.action_runner.run_loaded_actions()
+        self.action_runner.load_waiting_action('wake_up')
+        self.action_runner.run_loaded_actions()
 
         while not self.recognition_manager['attempt_success'] and self.recognition_manager['attempt_number'] < 2:
             self.action_runner.run_waiting_action('say', 'Hi I am Nao. What is your name?')
+            print('wow')
+
             self.action_runner.run_waiting_action('speech_recognition', 'answer_name', 3,
                                                   additional_callback=self.on_intent)
         self.reset_recognition_management()
