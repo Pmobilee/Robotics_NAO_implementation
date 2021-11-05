@@ -1,8 +1,10 @@
 from time import sleep
+import random
 
 from social_interaction_cloud.action import ActionRunner
 from social_interaction_cloud.basic_connector import BasicSICConnector
-
+import json
+import pickle
 
 class Example:
 
@@ -35,7 +37,21 @@ class Example:
         # else:
         #     self.action_runner.run_waiting_action('say', 'Something went wrong.')
 
-        self.action_runner.run_waiting_action('rest')
+        #self.action_runner.run_waiting_action('rest')
+
+        # motions = None
+        # try:
+        #     with open('motions.json','rb') as infile:
+        #         motions = pickle.load(infile)
+        #     print(motions)
+        # except EOFError as e:
+        #     print(e, ':(')
+        # for motion in motions:
+        #     self.action_runner._waiting_action('play_motion', motions[motion])
+
+        # self.action_runner.run_loaded_actions()
+
+
         self.sic.stop()
 
     def retrieve_recorded_motion(self, motion) -> None:
@@ -43,6 +59,33 @@ class Example:
 
 
 
+
+
 example = Example('127.0.0.1')
 example.run()
 print(type(example.motion))
+
+motions = None
+try:
+    with open('motions.json','rb') as infile:
+        motions = pickle.load(infile)
+        print(motions)
+except EOFError as e:
+    print(e, ':(')
+
+for motion in motions:
+    example.action_runner.load_waiting_action('play_motion', motions[motion])
+example.action_runner.run_loaded_actions()
+
+
+# if motions:
+#     motions[f'Action{random.randint(2, 1000)}'] = example.motion
+# else:
+#     motions = {'Action1' : example.motion}
+
+# with open('motions.json', 'wb') as outfile:
+#     pickle.dump(motions, outfile)
+
+
+
+

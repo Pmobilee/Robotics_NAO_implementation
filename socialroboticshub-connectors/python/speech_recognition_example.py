@@ -37,7 +37,7 @@ class Example:
 
     def on_intent(self, detection_result: dict) -> None:
         if detection_result and detection_result['intent'] == 'answer_name' and len(detection_result['parameters']) > 0:
-            self.user_model['name'] = detection_result['parameters']['name']
+            self.user_model['name'] = detection_result['parameters']['name']['name']
             self.recognition_manager['attempt_success'] = True
         else:
             self.recognition_manager['attempt_number'] += 1
