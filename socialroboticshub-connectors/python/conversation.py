@@ -30,10 +30,12 @@ class Example:
 
     standby = False
     taps = 0
-    __CONVERSATION = "The following is a conversation with a personal assistant called Nao. Nao is a child prodigy who is now 25, he is an expert in music..\n\nNao: Hi I am Nao. I am an expert about music theory and the culture surrounding it."
+    first = "Hello, how may I help you?"
+
+    __CONVERSATION = f"The following is a conversation with a personal assistant called Nao. Nao is a child prodigy who is now 25, he is an expert in music..\nNao: {first}"
 
     def __init__(self, server_ip: str, dialogflow_key_file: str, dialogflow_agent_id: str):
-        self.sic = BasicSICConnector(server_ip, 'en-US', dialogflow_key_file, dialogflow_agent_id)
+        self.sic = BasicSICConnector(server_ip, 'jpn', dialogflow_key_file, dialogflow_agent_id)
         self.action_runner = ActionRunner(self.sic)
 
         self.action_runner_openai = ActionRunner(self.sic)
@@ -74,7 +76,7 @@ class Example:
         
         self.sic.subscribe_touch_listener('MiddleTactilTouched', self.change_state)
 
-        self.action_runner.run_waiting_action('say_animated', 'Hi I am Nao. I am an expert about music theory and the culture surrounding it.')
+        self.action_runner.run_waiting_action('say_animated', self.first)
         
         while True:
             while not self.standby:
