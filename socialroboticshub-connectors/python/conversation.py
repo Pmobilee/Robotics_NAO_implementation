@@ -1,30 +1,24 @@
 import openai
 import speech_recognition as sr
 import os
+import threading
+import time
 
-TEXT = True
+TEXT = False
 
+global standby
+standby = True
 openai.api_key = os.getenv('GPT3_KEY')
 
-CONVERSATION = "The following is a conversation with an AI assistant called Nao. Nao is helpful, creative, clever, and very friendly.\n\nNao: Hi I am Nao. What is your name?"
 
 def add_to_conv(C, text, human = True):
     if human:
-        C += f"\nHuman:{text}\nNao:"
+        C += f"\nHuman: {text}\nNao: "
     else:
         C += f"{text}"
     return C
 
-# response = openai.Completion.create(
-#   engine="davinci",
-#   prompt=CONVERSATION,
-#   temperature=0.9,
-#   max_tokens=150,
-#   top_p=1,
-#   frequency_penalty=0.0,
-#   presence_penalty=0.6,
-#   stop=["\n", " Human:", " AI:"]
-# )
+
 response = 'default '
 print(response)
 
@@ -42,13 +36,36 @@ class Example:
     a dialogflow_agent_id, and a running Dialogflow service. For help meeting these Prerequisites see
     https://socialrobotics.atlassian.net/wiki/spaces/CBSR/pages/260276225/The+Social+Interaction+Cloud+Manual"""
 
-    __CONVERSATION = "The following is a conversation with an AI assistant called Nao. Nao is helpful, creative, clever, and very friendly.\n\nNao: Hi I am Nao. What is your name?"
+    standby = True
+    taps = 0
+    __CONVERSATION = "The following is a conversation with a personal assistant called Nao. Nao is a child prodigy who is now 25, he is an expert in music..\n\nNao: Hi I am Nao. I am an expert about music theory and the culture surrounding it."
     def __init__(self, server_ip: str, dialogflow_key_file: str, dialogflow_agent_id: str):
         self.sic = BasicSICConnector(server_ip, 'en-US', dialogflow_key_file, dialogflow_agent_id)
         self.action_runner = ActionRunner(self.sic)
 
         self.user_model = {}
         self.recognition_manager = {'attempt_success': False, 'attempt_number': 0}
+        self.awake_lock = threading.Event()
+        
+    
+    def head_tapped_sleep(self):
+        #self.sic.unsubscribe_touch_listener('MiddleTactilTouched')
+        self.taps += 1
+        self.standby = True
+        self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
+        self.action_runner.run_waiting_action('say', 'I am sleeping.')
+
+    def head_tapped_awake(self):
+        self.taps += 1
+        self.standby = False
+        self.sic.subscribe_touch_listener('MiddleTactilTouched', self.head_tapped_sleep)
+        #self.sic.unsubscribe_touch_listener('RightBumperPressed')
+        print("OKOKOK")
+        self.action_runner.run_waiting_action('say', 'I am listening.')
+    
+        
+    def awake(self):
+        self.awake_lock.set()
 
     def run(self) -> None:
         self.sic.start()
@@ -56,34 +73,48 @@ class Example:
         self.action_runner.load_waiting_action('set_language', 'en-US')
         self.action_runner.load_waiting_action('wake_up')
         self.action_runner.run_loaded_actions()
+
+        self.sic.wake_up(self.awake)
+        self.awake_lock.wait()
         
-        self.action_runner.run_waiting_action('say', 'Hi I am Nao. What is your name?')
+        self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
+
+        self.action_runner.run_waiting_action('say', 'Hi I am Nao. I am an expert about music theory and the culture surrounding it.')
+        
         while True:
-            print(self.__CONVERSATION)
-            if TEXT:
-                t = input('\nHuman: ')
-                self.__CONVERSATION = add_to_conv(self.__CONVERSATION, t, human=True)
+            print(self.taps)
+            # if standby:
+            #     self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
+            # else:
+            #     self.sic.subscribe_touch_listener('MiddleTactilTouched', self.head_tapped_sleep)
+
+            while not standby:
                 
-            else:
-                self.action_runner.run_waiting_action('record_audio', 5,
-                                                  additional_callback=self.on_intent)
-            response = openai.Completion.create(
-                engine="davinci",
-                prompt=self.__CONVERSATION,
-                temperature=0.9,
-                max_tokens=150,
-                top_p=1,
-                frequency_penalty=0.0,
-                presence_penalty=0.6,
-                stop=["\n", " Human:", " Nao:"]
-                #stop=['*']
-                )
-            print(response)
-            response_text = response['choices'][0]['text']
+                print(self.__CONVERSATION)
+                if TEXT:
+                    t = input('\nHuman: ')
+                    self.__CONVERSATION = add_to_conv(self.__CONVERSATION, t, human=True)
+                    
+                else:
+                    
+                    self.action_runner.run_waiting_action('record_audio', 5,
+                                                    additional_callback=self.on_intent)
+                response = openai.Completion.create(
+                    engine="davinci",
+                    prompt=self.__CONVERSATION,
+                    temperature=0.9,
+                    max_tokens=150,
+                    top_p=1,
+                    frequency_penalty=0.0,
+                    presence_penalty=0.6,
+                    stop=["\n", " Human:", " Nao:"]
+                    #stop=['*']
+                    )
+                print(response)
+                response_text = response['choices'][0]['text']
 
-            self.action_runner.run_waiting_action('say', response_text)
-            self.__CONVERSATION = add_to_conv(self.__CONVERSATION,response_text, human=False)
-
+                self.action_runner.run_waiting_action('say', response_text)
+                self.__CONVERSATION = add_to_conv(self.__CONVERSATION,response_text, human=False)
 
     def on_intent(self, detection_result) -> None:
         r = sr.Recognizer()
