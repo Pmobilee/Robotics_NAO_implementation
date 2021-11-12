@@ -5,11 +5,7 @@ import threading
 import time
 
 TEXT = False
-
-global standby
-standby = True
 openai.api_key = os.getenv('GPT3_KEY')
-
 
 def add_to_conv(C, text, human = True):
     if human:
@@ -18,14 +14,10 @@ def add_to_conv(C, text, human = True):
         C += f"{text}"
     return C
 
-
 response = 'default '
 print(response)
 
-
-
-    # Get human input
-
+# Get human input
 
 from social_interaction_cloud.action import ActionRunner
 from social_interaction_cloud.basic_connector import BasicSICConnector
@@ -39,31 +31,34 @@ class Example:
     standby = True
     taps = 0
     __CONVERSATION = "The following is a conversation with a personal assistant called Nao. Nao is a child prodigy who is now 25, he is an expert in music..\n\nNao: Hi I am Nao. I am an expert about music theory and the culture surrounding it."
+
     def __init__(self, server_ip: str, dialogflow_key_file: str, dialogflow_agent_id: str):
         self.sic = BasicSICConnector(server_ip, 'en-US', dialogflow_key_file, dialogflow_agent_id)
         self.action_runner = ActionRunner(self.sic)
+
+        self.action_runner_openai = ActionRunner(self.sic)
+        self.action_runner_openai.load_action('say', 'I am listening.')
+
+        self.action_runner_standby = ActionRunner(self.sic)
+        self.action_runner_standby.load_action('say', 'I am sleeping.')
 
         self.user_model = {}
         self.recognition_manager = {'attempt_success': False, 'attempt_number': 0}
         self.awake_lock = threading.Event()
         
     
-    def head_tapped_sleep(self):
+    #def head_tapped_sleep(self):
         #self.sic.unsubscribe_touch_listener('MiddleTactilTouched')
-        self.taps += 1
-        self.standby = True
-        self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
-        self.action_runner.run_waiting_action('say', 'I am sleeping.')
+        #self.taps += 1
+        #self.standby = True
+        #self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
 
-    def head_tapped_awake(self):
-        self.taps += 1
-        self.standby = False
-        self.sic.subscribe_touch_listener('MiddleTactilTouched', self.head_tapped_sleep)
+    #def head_tapped_awake(self):
+        #self.taps += 1
+        #self.standby = False
+        #self.sic.subscribe_touch_listener('MiddleTactilTouched', self.head_tapped_sleep)
         #self.sic.unsubscribe_touch_listener('RightBumperPressed')
-        print("OKOKOK")
-        self.action_runner.run_waiting_action('say', 'I am listening.')
-    
-        
+
     def awake(self):
         self.awake_lock.set()
 
@@ -77,18 +72,12 @@ class Example:
         self.sic.wake_up(self.awake)
         self.awake_lock.wait()
         
-        self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
+        self.sic.subscribe_touch_listener('MiddleTactilTouched', self.change_state)
 
         self.action_runner.run_waiting_action('say', 'Hi I am Nao. I am an expert about music theory and the culture surrounding it.')
         
         while True:
-            print(self.taps)
-            # if standby:
-            #     self.sic.subscribe_touch_listener('RightBumperPressed', self.head_tapped_awake)
-            # else:
-            #     self.sic.subscribe_touch_listener('MiddleTactilTouched', self.head_tapped_sleep)
-
-            while not standby:
+            while not self.standby:
                 
                 print(self.__CONVERSATION)
                 if TEXT:
@@ -97,7 +86,7 @@ class Example:
                     
                 else:
                     
-                    self.action_runner.run_waiting_action('record_audio', 5,
+                    self.action_runner_openai.run_waiting_action('record_audio', 5,
                                                     additional_callback=self.on_intent)
                 response = openai.Completion.create(
                     engine="davinci",
@@ -113,8 +102,15 @@ class Example:
                 print(response)
                 response_text = response['choices'][0]['text']
 
-                self.action_runner.run_waiting_action('say', response_text)
+                self.action_runner_openai.run_waiting_action('say', response_text)
                 self.__CONVERSATION = add_to_conv(self.__CONVERSATION,response_text, human=False)
+
+    def change_state(self):
+        if self.standby == True:
+            self.action_runner_openai.run_loaded_actions(clear=False)
+        else:
+            self.action_runner_standby.run_loaded_actions(clear=False)
+        self.standby = not self.standby
 
     def on_intent(self, detection_result) -> None:
         r = sr.Recognizer()
