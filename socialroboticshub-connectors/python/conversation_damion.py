@@ -2,7 +2,7 @@ import openai
 import speech_recognition as sr
 import os
 
-TEXT = True
+TEXT = False
 
 openai.api_key = os.getenv('GPT3_KEY')
 
@@ -15,20 +15,20 @@ def add_to_conv(C, text, human = True):
         C += f"{text}"
     return C
 
-def get_action(text):
+# def get_action(text):
 
-    if 'blue' in text.lower():
-        example.action_runner.run_waiting_action('say_animated', 'Activated blue colour scheme')
-        example.action_runner.run_waiting_action('set_eye_color', 'blue')
-        example.action_runner.run_waiting_action('set_ear_color', 'blue')
-        example.action_runner.run_waiting_action('set_head_color', 'blue')
+#     if 'blue' in text.lower():
+#         action_runner.run_waiting_action('say_animated', 'Activated blue colour scheme')
+#         action_runner.run_waiting_action('set_eye_color', 'blue')
+#         action_runner.run_waiting_action('set_ear_color', 'blue')
+#         action_runner.run_waiting_action('set_head_color', 'blue')
 
-    if 'fist' in text.lower:
-        example.action_runner.run_waiting_action('do_gesture', 'fistbump')
+#     if 'fist' in text.lower:
+#         try:
+#             example.action_runner.run_waiting_action('do_gesture', 'fistbump')
+#         except:
+#             print("Failed the gesture, continuing")
     
-        
-        
-        
 
 
 # response = openai.Completion.create(
@@ -72,7 +72,11 @@ class Example:
         self.action_runner.load_waiting_action('set_language', 'en-US')
         self.action_runner.load_waiting_action('wake_up')
         self.action_runner.run_loaded_actions()
-        self.action_runner.run_waiting_action('set_breathing', enable = True)
+
+        
+
+        self.action_runner.run_waiting_action('set_breathing', True)
+        #self.action_runner.run_action('set_eye_color', 'blue')
         self.action_runner.run_waiting_action('say_animated', 'Hey there, I\'m Nao, your favourite silicon friend! What would you like to talk about?')
         while True:
             print(self.__CONVERSATION)
@@ -97,8 +101,23 @@ class Example:
             print(response)
             response_text = response['choices'][0]['text']
             self.action_runner.run_waiting_action('say_animated', response_text)
+
             self.__CONVERSATION = add_to_conv(self.__CONVERSATION,response_text, human=False)
 
+    def get_action(self, text):
+
+        if 'blue' in text.lower():
+            self.action_runner.run_waiting_action('say_animated', 'Activated blue colour scheme')
+            self.action_runner.run_action('set_eye_color', 'blue')
+            self.action_runner.run_waiting_action('set_ear_color', 'blue')
+            self.action_runner.run_waiting_action('set_head_color', 'blue')
+
+        if 'fist' in text.lower:
+            try:
+                example.action_runner.run_waiting_action('do_gesture', 'fistbump')
+            except:
+                print("Failed the gesture, continuing")
+    
 
     def on_intent(self, detection_result) -> None:
         r = sr.Recognizer()
@@ -111,7 +130,7 @@ class Example:
             self.__CONVERSATION = add_to_conv(self.__CONVERSATION, text, human=True)
             self.user_model['text'] = text
             self.recognition_manager['attempt_success'] = True
-            get_action(text)
+            self.get_action(text)
         else:
             self.recognition_manager['attempt_number'] += 1
 
@@ -125,4 +144,5 @@ class Example:
 example = Example('127.0.0.1',
                   'sir-12-test-jsga-23d5d4c80b77.json',
                   'sir-12-test-jsga')
+
 example.run()

@@ -28,7 +28,7 @@ class Example:
     a dialogflow_agent_id, and a running Dialogflow service. For help meeting these Prerequisites see
     https://socialrobotics.atlassian.net/wiki/spaces/CBSR/pages/260276225/The+Social+Interaction+Cloud+Manual"""
 
-    standby = True
+    standby = False
     taps = 0
     __CONVERSATION = "The following is a conversation with a personal assistant called Nao. Nao is a child prodigy who is now 25, he is an expert in music..\n\nNao: Hi I am Nao. I am an expert about music theory and the culture surrounding it."
 
@@ -37,10 +37,10 @@ class Example:
         self.action_runner = ActionRunner(self.sic)
 
         self.action_runner_openai = ActionRunner(self.sic)
-        self.action_runner_openai.load_action('say', 'I am listening.')
+        self.action_runner_openai.load_action('say_animated', 'I am listening.')
 
         self.action_runner_standby = ActionRunner(self.sic)
-        self.action_runner_standby.load_action('say', 'I am sleeping.')
+        self.action_runner_standby.load_action('say_animated', 'I am sleeping.')
 
         self.user_model = {}
         self.recognition_manager = {'attempt_success': False, 'attempt_number': 0}
@@ -74,7 +74,7 @@ class Example:
         
         self.sic.subscribe_touch_listener('MiddleTactilTouched', self.change_state)
 
-        self.action_runner.run_waiting_action('say', 'Hi I am Nao. I am an expert about music theory and the culture surrounding it.')
+        self.action_runner.run_waiting_action('say_animated', 'Hi I am Nao. I am an expert about music theory and the culture surrounding it.')
         
         while True:
             while not self.standby:
@@ -102,7 +102,7 @@ class Example:
                 print(response)
                 response_text = response['choices'][0]['text']
 
-                self.action_runner_openai.run_waiting_action('say', response_text)
+                self.action_runner_openai.run_waiting_action('say_animated', response_text)
                 self.__CONVERSATION = add_to_conv(self.__CONVERSATION,response_text, human=False)
 
     def change_state(self):
