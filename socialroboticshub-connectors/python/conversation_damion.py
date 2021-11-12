@@ -24,11 +24,11 @@ def get_action(text):
         example.action_runner.run_waiting_action('set_head_color', 'blue')
 
     if 'fist' in text.lower:
-        example.action_runner.run_waiting_action('do_gesture', 'fistbump')
+        try:
+            example.action_runner.run_waiting_action('do_gesture', 'fistbump')
+        except:
+            print("Failed the gesture, continuing")
     
-        
-        
-        
 
 
 # response = openai.Completion.create(
