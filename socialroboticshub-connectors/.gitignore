@@ -1,6 +1,0 @@
-*.idea
-/
-*venv/
-**/*.iml
-*.pyc
-*.wav
